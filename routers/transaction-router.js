@@ -38,7 +38,6 @@ transactionRouter.get('/biggestspenders', async (req, res) => {
     series.push(parseFloat(spender.score.toFixed(2)))
     labels.push(spender.value)
   })
-
   res.send({series, labels})
 
 })
@@ -50,24 +49,19 @@ transactionRouter.get('/search', async (req, res) => {
   let results
 
   if(term.length>=3){
-    /*
-      REDIS CHALLENGE  4
-      Add Redis to the `/search` endpoint
-    */
-    results = [{}]
+    results = await bankRepo.search()
+      .where('description').matches(term)
+      .or('fromAccountName').matches(term)
+      .or('transactionType').equals(term)
+      .return.all({ pageSize: 1000})
   }
   res.send(results)
 })
 
 /* return ten most recent transactions */
 transactionRouter.get('/transactions', async (req, res) => {
-
-  /*
-    REDIS CHALLENGE 2
-    Add Redis to the `/transactions` endpoint
-  */
-  const transactions = []
-
-  res.send(transactions)
-
+  const transactions = await bankRepo.search()
+    .sortBy('transactionDate', 'DESC')
+    .return.all({ pageSize: 10})
+  res.send(transactions.slice(0, 10))
 })

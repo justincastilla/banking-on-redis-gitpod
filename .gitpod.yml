@@ -1,7 +1,7 @@
 ports:
   - port: 8080
     onOpen: open-preview
-  - port: 80
+  - port: 8081
     onOpen: ignore
 
 tasks:

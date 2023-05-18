@@ -33,7 +33,7 @@ app.use(session({
 }))
 
 // set up a basic web sockect server and a set to hold all the sockets
-const wss = new WebSocketServer({ port: 80 })
+const wss = new WebSocketServer({ port: config.websocketPort})
 const sockets = new Set()
 
 // when someone connects, add their socket to the set of all sockets
@@ -47,18 +47,16 @@ const streamKey = 'transactions'
 let currentId = '$'
 
 cron.schedule('*/10 * * * * *', async () => {
-
   createBankTransaction()
+  const result = await redis2.xRead({ key: streamKey, id: currentId }, { COUNT: 1, BLOCK: 10000 });
 
-  /*
-    REDIS CHALLENGE 3
-    Read from the stream of transactions
-  */
+  // pull the values for the event out of the result
+  const [ { messages } ] = result
+  const [ { id, message } ] = messages
+  const event = { ...message }
 
-  
-  const result = [ { name: 'transactions', messages: [ {} ] } ]
-  const event = result[0].messages[0]
   sockets.forEach(socket => socket.send(JSON.stringify(event)))
+
   // update the current id so we get the next event next time
   currentId = id
 });
@@ -71,7 +69,7 @@ app.use('/transaction', transactionRouter)
 
 /* websocket poll response */
 app.get('/api/config/ws', (req, res) => {
-  res.json({"protocol":"ws","host":"localhost", "port": "80", "endpoint":"/websocket"})
+  res.json({"protocol":"ws","host":"localhost", "port": config.websocketPort, "endpoint":"/websocket"})
 })
 
 app.post('/perform_login', (req, res) => {
@@ -88,4 +86,4 @@ app.post('/perform_login', (req, res) => {
 })
 
 /* start the server */
-app.listen(config.expressPort, () => console.log("Listening on port", config.expressPort))
+app.listen(config.expressPort, () => console.log(`Listening on port ${config.expressPort}`))

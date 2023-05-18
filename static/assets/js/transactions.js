@@ -86,7 +86,6 @@ var transactionsOverview = new Vue({
       var vm = this
       axios.get(transactionsUrl)
         .then(function (response) {
-
           vm.items = response.data.map(item => {
             item.amount = item.amount.toFixed(2)
             return item
@@ -133,7 +132,6 @@ var transactionsOverview = new Vue({
 
           var wsConfig = response.data
           var url = `${wsConfig.protocol}://${wsConfig.host}:${wsConfig.port}${wsConfig.endpoint}`
-
           var ws= new WebSocket(url)
           ws.onopen = event => {
             ws.onmessage =  event => {
